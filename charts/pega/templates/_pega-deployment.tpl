@@ -34,6 +34,7 @@ spec:
 {{- end }}
         config-check: {{ include (print .root.Template.BasePath "/pega-environment-config.yaml") .root | sha256sum }}
         revision: "{{ .root.Release.Revision }}"
+{{- include "generatedPodAnnotations" . | indent 8 }}
 
     spec:
       volumes:
@@ -99,6 +100,10 @@ spec:
 {{- if .node.requestor }}
         - name: REQUESTOR_PASSIVATION_TIMEOUT
           value: "{{ .node.requestor.passivationTimeSec }}"
+{{- end }}
+{{- if and .root.Values.constellation (eq .root.Values.constellation.enabled true) }}
+        - name: COSMOS_SETTINGS
+          value: "Pega-UIEngine/cosmosservicesURI=/c11n"
 {{- end }}
 {{- if .custom }}
 {{- if .custom.env }}

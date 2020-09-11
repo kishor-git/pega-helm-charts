@@ -92,11 +92,12 @@ global:
           # Enable TLS encryption
           enabled: true
           # secretName:
-          # useManagedCertificate: false
+          useManagedCertificate: true
           # ssl_annotation:
 
       replicas: 1
       javaOpts: ""
+
       pegaDiagnosticUser: ""
       pegaDiagnosticPassword: ""
 
@@ -165,7 +166,7 @@ global:
           # Enable TLS encryption
           enabled: true
           # secretName:
-          # useManagedCertificate: false
+          useManagedCertificate: true
           # ssl_annotation:
 
       replicas: 2
