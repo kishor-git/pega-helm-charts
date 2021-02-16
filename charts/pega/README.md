@@ -208,7 +208,19 @@ Example:
 requestor:
   passivationTimeSec: 900
 ```
+### Security context
 
+By default, security context for your Pega pod deployments `pegasystems/pega` image uses `pegauser`(9001) as the user. To configure an alternative user for your custom image, set value for `runAsUser`. Note that pegasystems/pega image works only with pegauser(9001).
+`runAsUser` must be configured in `securityContext` under each tier block and will be applied to Deployments/Statefulsets, see the [Kubernetes Documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
+
+Example:
+
+```yaml
+tier:
+  - name: my-tier
+    securityContext:
+      runAsUser: RUN_AS_USER
+```
 ### service
 
 Specify the `service` yaml block to expose a Pega tier to other Kubernetes run services, or externally to other systems. The name of the service will be based on the tier's name, so if your tier is "web", your service name will be "pega-web". If you omit service, no Kubernetes service object is created for the tier during the deployment. For more information on services, see the [Kubernetes Documentation](https://kubernetes.io/docs/concepts/services-networking/service).
@@ -354,6 +366,20 @@ Parameter       | Description    | Default value
 `initialHeap`   | This specifies the initial heap size of the JVM.  | `4096m`
 `maxHeap`       | This specifies the maximum heap size of the JVM.  | `7168m`
 
+### JVM Arguments
+You can optionally pass in JVM arguments to Tomcat.  Depending on the parameter/attribute used, the arguments will be placed into `JAVA_OPTS` or `CATALINA_OPTS` environmental variables.
+Some of the Best-practice arguments for JVM tuning are included by default in `CATALINA_OPTS`.
+Pass the required JVM parameters as `catalinaOpts` attributes in respective `values.yaml` file.  
+
+Example:
+```yaml
+tier:
+  - name: my-tier
+    javaOpts: ""
+    catalinaOpts: "-XX:SomeJVMArg=XXX"
+```
+Note that some JVM arguments are non-overrideable i.e. baked in the Docker image. <br>
+Check [RecommendedJVMArgs.md](./RecommendedJVMArgs.md) for more details.
 ### nodeSelector
 
 Pega supports configuring certain nodes in your Kubernetes cluster with a label to identify its attributes, such as persistent storage. For such configurations, use the Pega Helm chart nodeSelector property to assign pods in a tier to run on particular nodes with a specified label. For more information about assigning Pods to Nodes including how to configure your Nodes with labels, see the [Kubernetes documentation on nodeSelector](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector).
@@ -403,6 +429,8 @@ Parameter           | Description    | Default value
 `hpa.maxReplicas`   | Maximum number of replicas that HPA can scale-up  | `5`
 `hpa.targetAverageCPUUtilization` | Threshold value for scaling based on initial CPU request utilization (The default value is `70` which corresponds to 70% of 2) | `70`
 `hpa.targetAverageMemoryUtilization` | Threshold value for scaling based on initial memory utilization (The default value is `85` which corresponds to 85% of 6Gi ) | `85`
+`hpa.enableCpuTarget` | Set to true if you want to enable scaling based on CPU utilization or false if you want to disable it | true
+`hpa.enableMemoryTarget` | Set to true if you want to enable scaling based on memory utilization or false if you want to disable it  | true
 
 ### Volume claim template
 
@@ -542,6 +570,25 @@ dds:
 ## Search deployment
 
 Use the `pegasearch` section to configure a deployment of ElasticSearch for searching Rules and Work within Pega.  This deployment is used exclusively for Pega search, and is not the same ElasticSearch deployment used by the EFK stack or any other dedicated service such as Pega BI.
+
+### For Pega Platform 8.6 and later:
+
+Pega recommends using the chart ['backingservices'](../backingservices) to enable the use of a search and reporting service in your deployment. This is a shareable and independently manageable search solution for Pega Platform that replaces the previously used Elasticsearch. To use this search and reporting service, you must follow the deployment instructions provided at [backingservices](../backingservices/README.md) to provision the service. The Search and Reporting Service (SRS) Url can be configured with the current Pega platform environment using the below configuration in values.yaml.
+
+Parameter   | Description   | Default value
+---         | ---           | ---
+`externalSearchService` | Set the `pegasearch.externalSearchService` as true to use Search and Reporting service as the search functionality provider to the Pega platform | false
+`externalURL` | Set the `pegasearch.externalURL` value to the Search and Reporting Service endpoint url | `""`
+
+Example:
+
+```yaml
+pegasearch:
+  externalSearchService: true
+  externalURL: "http://srs-service.namespace.svc.cluster.local"
+```
+
+Use the below configuration to provision an internally deployed instance of elasticsearch for search functionality within the platform:
 
 Parameter   | Description   | Default value
 ---         | ---           | ---
